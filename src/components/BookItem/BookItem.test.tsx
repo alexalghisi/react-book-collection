@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BookItem } from './BookItem';
 import { Book } from '../../types/book';
@@ -31,8 +31,9 @@ describe('BookItem', () => {
 
     await user.click(toggleButton);
 
-    const descriptionAfter = screen.getByText('This is a test description');
-    expect(descriptionAfter).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('This is a test description')).toBeInTheDocument();
+    });
     expect(screen.getByRole('button', { name: /hide description/i })).toBeInTheDocument();
   });
 
@@ -43,11 +44,16 @@ describe('BookItem', () => {
     const toggleButton = screen.getByRole('button', { name: /show description/i });
     await user.click(toggleButton);
 
+    await waitFor(() => {
+      expect(screen.getByText('This is a test description')).toBeInTheDocument();
+    });
+
     const hideButton = screen.getByRole('button', { name: /hide description/i });
     await user.click(hideButton);
 
-    const description = screen.queryByText('This is a test description');
-    expect(description).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('This is a test description')).not.toBeInTheDocument();
+    });
   });
 
   it('does not show toggle button when description is missing', () => {
@@ -74,7 +80,7 @@ describe('BookItem', () => {
     expect(image).toHaveAttribute('src', expect.stringContaining('placeholder'));
   });
 
-  it('handles image load error gracefully', () => {
+  it('handles image load error gracefully', async () => {
     const bookWithInvalidImage: Book = {
       id: '4',
       title: 'Book With Invalid Image',
@@ -84,13 +90,16 @@ describe('BookItem', () => {
 
     render(<BookItem book={bookWithInvalidImage} />);
 
-    const image = screen.getByAltText(expect.stringContaining('cover'));
+    const image = screen.getByAltText(/cover/i);
     expect(image).toBeInTheDocument();
+    expect(image).toHaveAttribute('src', 'https://invalid-url.com/image.jpg');
 
-    const errorEvent = new Event('error');
-    image.dispatchEvent(errorEvent);
+    fireEvent.error(image);
 
-    expect(image).toHaveAttribute('src', expect.stringContaining('placeholder'));
+    await waitFor(() => {
+      const updatedImage = screen.getByAltText('Book cover placeholder');
+      expect(updatedImage).toHaveAttribute('src', expect.stringContaining('placeholder'));
+    });
   });
 
   it('has proper accessibility attributes', () => {
