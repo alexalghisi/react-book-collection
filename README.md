@@ -2,6 +2,10 @@
 
 A reusable React component for displaying a list of books with modern development practices, accessibility standards, and production-ready code.
 
+**Download:** [latest release](https://github.com/alexalghisi/react-book-collection/releases/latest)
+
+![react-book-collection running](docs/preview.png)
+
 ## Features
 
 - **Book Display**: Each book item shows title, optional description, and optional image
